@@ -11,36 +11,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Set up Java JDK
+        uses: actions/setup-java@v5
         with:
-          distribution: temurin
-          java-version: 17
+          distribution: 'temurin'
+          java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.7
+          gradle-version: '8.7'
 
-      - name: Extract Project
+      - name: Extract Project Files
         run: |
-          rm -rf TuneSwap
-          mkdir -p temp_extracted
-          unzip -o -q TuneSwap*.zip -d temp_extracted
-          if [ -d "temp_extracted/TuneSwap" ]; then
-            mv temp_extracted/TuneSwap TuneSwap
+          rm -rf TuneSwap temp_extract
+          mkdir -p temp_extract
+          
+          # Suche nach jeder hochgeladenen .zip Datei im Repo
+          ZIP_FILE=$(find . -maxdepth 2 -name "*.zip" | head -n 1)
+          
+          if [ -n "$ZIP_FILE" ]; then
+            echo "Entpacke $ZIP_FILE..."
+            unzip -o -q "$ZIP_FILE" -d temp_extract
           else
-            mv temp_extracted TuneSwap
+            echo "Keine ZIP-Datei gefunden, nutze Repository-Inhalt direkt"
+            cp -r . temp_extract/
           fi
-          rm -rf temp_extracted
+          
+          # Finde heraus, in welchem Ordner die build.gradle/settings.gradle liegt
+          GRADLE_DIR=$(find temp_extract -name "settings.gradle*" -exec dirname {} \; | head -n 1)
+          
+          if [ -n "$GRADLE_DIR" ]; then
+            mkdir -p TuneSwap
+            cp -r "$GRADLE_DIR"/* TuneSwap/
+          else
+            echo "Fehler: Keine Gradle-Dateien gefunden!"
+            exit 1
+          fi
 
-      - env:
+      - name: Build Debug APK
+        env:
           SPOTIFY_ID: ${{ secrets.SPOTIFY_ID }}
           GOOGLE_ID: ${{ secrets.GOOGLE_ID }}
           GOOGLE_SECRET: ${{ secrets.GOOGLE_SECRET }}
         run: cd TuneSwap && gradle assembleDebug --no-daemon
 
-      - env:
+      - name: Create GitHub Release
+        env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create v${{ github.run_number }} TuneSwap/app/build/outputs/apk/debug/app-debug.apk --title "APK ${{ github.run_number }}" --notes "Automated release build number ${{ github.run_number }}"
