@@ -22,4 +22,4 @@ jobs:
         run: cd TuneSwap && gradle assembleDebug --no-daemon
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create v${{ github.run_number }} TuneSwap/app/build/outputs/apk/debug/app-debug.apk --title "APK ${{ github.run_number }}" --notes "Debug APK"
+        run: gh release create v${{ github.run_number }} TuneSwap/app/build/outputs/apk/debug/TuneSwap.apk --title "APK ${{ github.run_number }}" --notes "Debug APK"
