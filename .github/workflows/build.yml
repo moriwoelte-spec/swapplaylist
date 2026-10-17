@@ -14,8 +14,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.7
-      - run: unzip -q PlaylistSync*.zip
-      - run: cd PlaylistSync && gradle assembleDebug --no-daemon
+      - run: unzip -q TuneSwap*.zip
+      - env:
+          SPOTIFY_ID: ${{ secrets.SPOTIFY_ID }}
+          GOOGLE_ID: ${{ secrets.GOOGLE_ID }}
+          GOOGLE_SECRET: ${{ secrets.GOOGLE_SECRET }}
+        run: cd TuneSwap && gradle assembleDebug --no-daemon
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create v${{ github.run_number }} PlaylistSync/app/build/outputs/apk/debug/app-debug.apk --title "APK ${{ github.run_number }}" --notes "Debug APK"
+        run: gh release create v${{ github.run_number }} TuneSwap/app/build/outputs/apk/debug/app-debug.apk --title "APK ${{ github.run_number }}" --notes "Debug APK"
