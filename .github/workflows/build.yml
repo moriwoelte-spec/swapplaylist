@@ -22,7 +22,14 @@ jobs:
         with:
           gradle-version: 8.7
 
-      - run: unzip -q TuneSwap*.zip
+      # Entpackt die Dateien direkt nach TuneSwap/
+      - run: |
+          mkdir -p TuneSwap
+          unzip -o -q TuneSwap*.zip -d TuneSwap
+          # Falls in der ZIP bereits ein Unterordner "TuneSwap" war, verschieben wir ihn nach oben
+          if [ -d "TuneSwap/TuneSwap" ]; then
+            mv TuneSwap/TuneSwap/* TuneSwap/
+          fi
 
       - env:
           SPOTIFY_ID: ${{ secrets.SPOTIFY_ID }}
